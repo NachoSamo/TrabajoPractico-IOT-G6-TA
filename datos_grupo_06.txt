@@ -1,0 +1,29 @@
+TP INTEGRADOR DE IoT - 4K2 - 2026
+GRUPO 06
+
+INTEGRANTES
+-----------
+Apellido, Nombre - Legajo
+Apellido, Nombre - Legajo
+Apellido, Nombre - Legajo
+(COMPLETAR con todos los integrantes)
+
+CANAL DE THINGSPEAK
+-------------------
+Channel ID:     3491303
+Write API Key:  DL4NFMT58QUR5S4A
+URL publica:    https://thingspeak.com/channels/3491303
+
+CAMPOS DEL CANAL
+----------------
+Field 1 - Aleatorio           : valor aleatorio entre 100 y 500
+Field 2 - Temperatura         : grados Celsius (DHT22)
+Field 3 - Humedad             : humedad relativa % (DHT22)
+Field 4 - Uptime_s            : segundos transcurridos desde el inicio
+Field 5 - PWM_LED_Interno     : valor PWM del LED integrado (0-4095, 12 bits)
+Field 6 - Brillo_LED_Externo  : porcentaje de brillo del LED externo (0-100)
+
+ARCHIVOS ENTREGADOS
+-------------------
+sketch_envio_grupo_06.ino   - Sketch 1: toma y envio de datos
+sketch_lectura_grupo_06.ino - Sketch 2: lectura desde ThingSpeak
