@@ -3,10 +3,12 @@ GRUPO 06
 
 INTEGRANTES
 -----------
-Apellido, Nombre - Legajo
-Apellido, Nombre - Legajo
-Apellido, Nombre - Legajo
-(COMPLETAR con todos los integrantes)
+Ignacio Samocachan
+Olivia Garcia Osella
+Juan Ignacio Arrigoni
+Geronimo Maggi
+Isabella Zancanaro
+Guillermina Ritta
 
 CANAL DE THINGSPEAK
 -------------------
@@ -22,8 +24,3 @@ Field 3 - Humedad             : humedad relativa % (DHT22)
 Field 4 - Uptime_s            : segundos transcurridos desde el inicio
 Field 5 - PWM_LED_Interno     : valor PWM del LED integrado (0-4095, 12 bits)
 Field 6 - Brillo_LED_Externo  : porcentaje de brillo del LED externo (0-100)
-
-ARCHIVOS ENTREGADOS
--------------------
-sketch_envio_grupo_06.ino   - Sketch 1: toma y envio de datos
-sketch_lectura_grupo_06.ino - Sketch 2: lectura desde ThingSpeak
