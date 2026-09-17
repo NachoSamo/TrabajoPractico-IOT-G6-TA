@@ -24,8 +24,8 @@
 #include <DHT.h>
 #include <assert.h>
 
-const char*         WIFI_SSID        = "Olivia";    // hotspot del celular, 2.4 GHz
-const char*         WIFI_PASS        = "olivia111";
+const char*         WIFI_SSID        = "ACNET2";    // hotspot del celular, 2.4 GHz
+const char*         WIFI_PASS        = "";
 const unsigned long TS_CHANNEL_ID    = 3491303;  // solo informativo: la escritura va por API key
 const char*         TS_WRITE_API_KEY = "DL4NFMT58QUR5S4A";    
 const char*         OTA_HOSTNAME     = "esp32-Grupo06";
@@ -51,17 +51,17 @@ const int PWM_MAX  = 4095;
 const unsigned long MS_DHT        = 2000;   // el DHT22 no admite lecturas mas rapidas
 const unsigned long MS_TOUCH      = 100;    // ritmo de la rampa de brillo (como el caso 9)
 const unsigned long MS_DISPLAY    = 100;
-const unsigned long MS_PANTALLA   = 4000;   // tiempo por pantalla en rotacion
-const unsigned long MS_FIJA       = 10000;  // pantalla fija tras mover pote o touch
+const unsigned long MS_PANTALLA   = 2000;   // tiempo por pantalla en rotacion (clima <-> thingspeak)
+const unsigned long MS_FIJA       = 5000;   // cuanto se muestra la pantalla del pote o del touch
 const unsigned long MS_ENVIO      = 16000;  // ThingSpeak free: minimo 15 s
 const unsigned long MS_RECONEXION = 5000;
 const unsigned long MS_REINTENTO  = 5000;   // espera antes de reintentar un envio fallido
 const unsigned long MS_LOG_TOUCH  = 500;    // ritmo del log de calibracion del touch
 
 // ---- Potenciometro -------------------------------------------------------
-// El ADC de la ESP32 tiene ruido de +-3 cuentas
 const int POTE_MUESTRAS   = 16;   // promedio por lectura
-const int POTE_HISTERESIS = 16;   // cuentas de cambio minimo para actualizar
+const int POTE_HISTERESIS = 16;   // cambio minimo para actualizar el brillo del LED
+const int POTE_MOVIMIENTO = 100;  // cambio minimo para mostrar la pantalla (el ruido no llega a esto)
 
 // ---- Touch capacitivo ----------------------------------------------------
 // Medido en la placa: sin tocar ~1000, tocando ~400. Por debajo de 600 = tocado.
@@ -77,6 +77,7 @@ DHT dht(PIN_DHT, DHT22);
 
 // ---------------------- Estado ----------------------------------------------
 int   pwmLedInterno = 0;        // 0..4095, valor del potenciometro
+int   poteReferencia = 0;       // valor del pote la ultima vez que se mostro su pantalla
 int   brilloExterno = 0;        // 0..4095, controlado por los touch
 float temperatura   = NAN;
 float humedad       = NAN;
@@ -281,10 +282,11 @@ void encabezado(const char* titulo) {
   display.setTextSize(1);
   display.setCursor(0, 0);
   display.print(titulo);
-  for (int i = 0; i < NUM_PANTALLAS; i++) {
-    int x = 104 + i * 7;
-    if (i == pantalla) display.fillCircle(x, 3, 2, SH110X_WHITE);
-    else               display.drawCircle(x, 3, 2, SH110X_WHITE);
+  // Puntos de pagina solo en las dos pantallas que rotan
+  if (pantalla == PANT_CLIMA || pantalla == PANT_TS) {
+    bool enClima = (pantalla == PANT_CLIMA);
+    if (enClima) display.fillCircle(118, 3, 2, SH110X_WHITE); else display.drawCircle(118, 3, 2, SH110X_WHITE);
+    if (enClima) display.drawCircle(125, 3, 2, SH110X_WHITE); else display.fillCircle(125, 3, 2, SH110X_WHITE);
   }
   display.drawFastHLine(0, 40, 128, SH110X_WHITE);
 }
@@ -373,12 +375,15 @@ void (*PANTALLAS[NUM_PANTALLAS])() = {
 void actualizarPantalla() {
   unsigned long ahora = millis();
 
+  // Pote y touch solo se ven al accionarlos; al terminar vuelve a clima
   if (pantallaFija && ahora - tsInteraccion >= MS_FIJA) {
     pantallaFija = false;
+    pantalla     = PANT_CLIMA;
     tsPantalla   = ahora;
   }
+  // Rotacion continua: solo clima <-> thingspeak
   if (!pantallaFija && ahora - tsPantalla >= MS_PANTALLA) {
-    pantalla   = (pantalla + 1) % NUM_PANTALLAS;
+    pantalla   = (pantalla == PANT_CLIMA) ? PANT_TS : PANT_CLIMA;
     tsPantalla = ahora;
   }
 
@@ -505,7 +510,8 @@ void setup() {
   pwmInit(PIN_LED_EXT);
   pwmSet(PIN_LED_INT, 0);
   pwmSet(PIN_LED_EXT, 0);
-  pwmLedInterno = leerPoteFiltrado();   // evita que el loop lo tome como movimiento al arrancar
+  pwmLedInterno  = leerPoteFiltrado();   // evita que el loop lo tome como movimiento al arrancar
+  poteReferencia = pwmLedInterno;
 
   configurarTouch();
 
@@ -525,10 +531,14 @@ void loop() {
   unsigned long ahora = millis();
 
   // --- Item 1: potenciometro -> brillo del LED integrado (12 bits) ---
-  int pote = leerPoteFiltrado();
-  if (pote != pwmLedInterno) interaccion(PANT_LED_INT);
-  pwmLedInterno = pote;
+  pwmLedInterno = leerPoteFiltrado();
   pwmSet(PIN_LED_INT, pwmLedInterno);
+
+  // Solo un movimiento real del pote muestra su pantalla, no el ruido del ADC
+  if (abs(pwmLedInterno - poteReferencia) >= POTE_MOVIMIENTO) {
+    poteReferencia = pwmLedInterno;
+    interaccion(PANT_LED_INT);
+  }
 
   // --- Item 3: touch -> brillo del LED externo (12 bits) ---
   if (ahora - tsTouch >= MS_TOUCH) {

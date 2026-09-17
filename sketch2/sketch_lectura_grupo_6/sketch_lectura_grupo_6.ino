@@ -19,8 +19,8 @@
 // ==================== CONFIGURACION ====================
 
 // Credenciales de la red WiFi
-const char* ssid = "Olivia";
-const char* password = "olivia111";
+const char* ssid = "ACNET2";
+const char* password = "";
 
 // Datos del canal publico de ThingSpeak
 unsigned long channelID = 3491303;
