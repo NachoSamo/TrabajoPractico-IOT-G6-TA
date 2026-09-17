@@ -84,6 +84,7 @@ float humedad       = NAN;
 
 volatile bool touchDetectadoUp   = false;
 volatile bool touchDetectadoDown = false;
+bool  estabaTocado = false;     // estado del touch en la verificacion anterior
 
 enum { PANT_CLIMA, PANT_LED_INT, PANT_LED_EXT, PANT_TS, NUM_PANTALLAS };
 int   pantalla       = PANT_CLIMA;
@@ -149,18 +150,28 @@ void configurarTouch() {
   touchAttachInterrupt(PIN_TOUCH_DOWN, handleTouchDown, TOUCH_UMBRAL);
 }
 
+bool pinTocado(int pin) {
+  return touchRead(pin) < TOUCH_UMBRAL;
+}
+
 void actualizarTouch() {
-  if (touchDetectadoUp) {
-    brilloExterno = clamp12(brilloExterno + TOUCH_PASO);
-    touchDetectadoUp = false;
-    interaccion(PANT_LED_EXT);
-  }
-  if (touchDetectadoDown) {
-    brilloExterno = clamp12(brilloExterno - TOUCH_PASO);
-    touchDetectadoDown = false;
-    interaccion(PANT_LED_EXT);
-  }
+  bool tocaUp   = pinTocado(PIN_TOUCH_UP);
+  bool tocaDown = pinTocado(PIN_TOUCH_DOWN);
+
+  // La interrupcion avisa; se confirma leyendo el pin para descartar ruido
+  if (touchDetectadoUp && tocaUp)     brilloExterno = clamp12(brilloExterno + TOUCH_PASO);
+  if (touchDetectadoDown && tocaDown) brilloExterno = clamp12(brilloExterno - TOUCH_PASO);
+  touchDetectadoUp   = false;
+  touchDetectadoDown = false;
   pwmSet(PIN_LED_EXT, brilloExterno);
+
+  bool tocado = tocaUp || tocaDown;
+  if (tocado && !estabaTocado) {
+    interaccion(PANT_LED_EXT);              // paso de libre a TOCADO: mostrar pantalla
+  } else if (tocado && pantalla == PANT_LED_EXT) {
+    tsInteraccion = millis();               // sigue tocando: el tiempo cuenta desde el ultimo toque
+  }
+  estabaTocado = tocado;
 }
 
 #if LOG_TOUCH
