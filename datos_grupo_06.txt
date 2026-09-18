@@ -3,12 +3,12 @@ GRUPO 06
 
 INTEGRANTES
 -----------
-Ignacio Samocachan
-Olivia Garcia Osella
-Juan Ignacio Arrigoni
-Geronimo Maggi
-Isabella Zancanaro
-Guillermina Ritta
+Ignacio Samocachan - 400621
+Olivia Garcia Osella - 400032
+Juan Ignacio Arrigoni - 407069
+Geronimo Maggi - 402494
+Isabella Zancanaro - 403862
+Guillermina Ritta - 400299
 
 CANAL DE THINGSPEAK
 -------------------
